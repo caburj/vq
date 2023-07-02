@@ -888,7 +888,8 @@ class Events:
             f.write(",".join(columns)+"\n")
 
             ## VALUES
-            events = (self._events[event_id] for event_id in range(len(self._events)))
+            descending_event_ids = range(len(self._events) - 1, -1, -1)
+            events = (self._events[event_id] for event_id in descending_event_ids)
             event_values = ((i, event.getEventTrigger(), event.getEventYear(), event.getMagnitude()) for i, event in enumerate(events))
 
             for (event_id, element_id, event_year, magnitude) in event_values:
