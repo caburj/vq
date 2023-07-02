@@ -853,7 +853,60 @@ class Events:
     def largest_event_summary(self, num_events, geometry):
         evnums = self.get_ids_largest_events(num_events)
         self.event_summary(evnums, geometry)
-    
+
+    def event_catalogue(self, geometry):
+        import math
+        import datetime
+
+        def destructure_year(years):
+            int_year = math.trunc(years)
+            remaining = years - int_year
+            time = datetime.datetime.fromtimestamp(remaining * 365.25 * 24 * 60 * 60)
+            month = time.month
+            day = time.day
+            hours = time.hour
+            minutes = time.minute
+            seconds = time.second
+            return int_year, month, day, hours, minutes, seconds
+
+        # SETUP
+        base = geometry.model.get_base()
+        base_lld = quakelib.LatLonDepth(base[0], base[1], 0.0)
+        c = quakelib.Conversion(base_lld)
+
+        # OPEN FILE
+        filename = "event_catalogue.csv"
+        with open(filename, "w") as f:
+
+            ## COLUMN NAMES
+            columns = ["event_id", "year", "month", "day", "hours", "minutes", "seconds", "magnitude", "sigma_mag"]
+            for i in [0,1,2,3]:
+                columns.append("vertex_"+str(i)+"_lat")
+                columns.append("vertex_"+str(i)+"_lon")
+                columns.append("vertex_"+str(i)+"_depth")
+
+            f.write(",".join(columns)+"\n")
+
+            ## VALUES
+            events = (self._events[event_id] for event_id in range(len(self._events)))
+            event_values = ((i, event.getEventTrigger(), event.getEventYear(), event.getMagnitude()) for i, event in enumerate(events))
+
+            for (event_id, element_id, event_year, magnitude) in event_values:
+                year, month, day, hours, minutes, seconds = destructure_year(event_year)
+                element = geometry.model.element(element_id)
+                llds = [geometry.model.vertex(element.vertex(i)).lld() for i in [0,1,2]]
+                xyzs = [geometry.model.vertex(element.vertex(i)).xyz() for i in [0,1,2]]
+                if element.is_quad():
+                    llds.append(c.convert2LatLon(xyzs[2] + (xyzs[1] - xyzs[0])))
+
+                row = [event_id, year, month, day, hours, minutes, seconds, round(magnitude, 1), 0]
+                for lld in llds:
+                    row.append(lld.lat())
+                    row.append(lld.lon())
+                    row.append(lld.altitude() / -1000.0)
+
+                f.write(",".join([str(val) for val in row])+"\n")
+
     def event_initial_shear_stresses(self):
         return [self._events[evnum].getShearStressInit() for evnum in self._filtered_events if not np.isnan(self._events[evnum].getMagnitude())]
 
@@ -3117,6 +3170,8 @@ if __name__ == "__main__":
             help="Print event summary for given --event_id")
     parser.add_argument('--large_summary', type=int, required=False,
             help="Specify the number of largest magnitude EQs to summarize.")
+    parser.add_argument('--event_catalogue', action='store_true', required=False,
+            help="Print event catalogue compatible for openquake.")
     parser.add_argument('--combine_file', required=False,
             help="Name of events hdf5 file to combine with event_file.")
     parser.add_argument('--label', required=False, type=str, nargs='+',
@@ -3516,11 +3571,15 @@ if __name__ == "__main__":
             sys.stdout.write("\n Event summary for: "+ args.event_file[i])
             event.event_summary([args.event_id], geometry)
         
-    if args.large_summary:
+    if args.large_summary or args.event_catalogue:
         if args.model_file is None: raise BaseException("\nMust specify --model_file for summary.")
         for i, event in enumerate(events):        
-            sys.stdout.write("\n Event summary for: "+ args.event_file[i])
-            event.largest_event_summary(args.large_summary, geometry)
+            if args.large_summary:
+                sys.stdout.write("\n Event summary for: "+ args.event_file[i])
+                event.largest_event_summary(args.large_summary, geometry)
+            if args.event_catalogue:
+                sys.stdout.write("\n Event catalogue for: "+ args.event_file[i])
+                event.event_catalogue(geometry)
 
     if args.event_elements:
         if args.event_id is None: raise BaseException("\nMust specify --event_id")
