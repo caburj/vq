@@ -2243,12 +2243,17 @@ class FieldPlotter:
         height_frac = cb_height/ph
 
         cb_ax = fig4.add_axes((left_frac,bottom_frac,width_frac,height_frac))
-        cb_ax.xaxis.set_major_locator(mticker.LinearLocator(numticks=5))
-        cb_ax.xaxis.set_major_formatter(mticker.FormatStrFormatter('%.1e'))
         norm = self.norm
         cb = mcolorbar.ColorbarBase(cb_ax, cmap=cmap,
                norm=norm,
                orientation='horizontal')
+
+        if self.field_type == 'coulomb':
+            coulomb_ticks = [self.dmc['cbar_min'], self.dmc['cbar_min'] / 2, 0, self.dmc['cbar_max'] / 2, self.dmc['cbar_max']]
+            coulomb_tick_labels = ['{:.1e}'.format(x) for x in coulomb_ticks]
+            cb.set_ticks(coulomb_ticks)
+            cb.set_ticklabels(coulomb_tick_labels)
+
         if self.field_type == 'displacement' or self.field_type == 'insar':
             if self.fringes:
                 cb_title = 'Displacement [m]'
@@ -2271,12 +2276,14 @@ class FieldPlotter:
                 cb_title = 'Geoid height change [cm]'
             elif self.field_type == 'coulomb':
                 cb_title = 'Change in Coulomb Failure Function [pa]'
-            # Make first and last ticks on colorbar be <MIN and >MAX.
-            # Values of colorbar min/max are set in FieldPlotter init.
-            cb_tick_labs    = [item.get_text() for item in cb_ax.get_xticklabels()]
-            cb_tick_labs[0] = '<'+cb_tick_labs[0]
-            cb_tick_labs[-1]= '>'+cb_tick_labs[-1]
-            cb_ax.set_xticklabels(cb_tick_labs)
+
+            if self.field_type != 'coulomb':
+                # Make first and last ticks on colorbar be <MIN and >MAX.
+                # Values of colorbar min/max are set in FieldPlotter init.
+                cb_tick_labs    = [item.get_text() for item in cb_ax.get_xticklabels()]
+                cb_tick_labs[0] = '<'+cb_tick_labs[0]
+                cb_tick_labs[-1]= '>'+cb_tick_labs[-1]
+                cb_ax.set_xticklabels(cb_tick_labs)
 
         cb_ax.set_title(cb_title, fontproperties=font, color=cb_fontcolor, size=cb_fontsize, va='top', ha='left', position=(0,-1.5) )
 
