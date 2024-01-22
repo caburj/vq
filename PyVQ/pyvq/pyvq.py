@@ -30,6 +30,7 @@ try:
     import matplotlib.colorbar as mcolorbar
     import matplotlib.lines as mlines
     import matplotlib.patches as mpatches
+    import matplotlib.ticker as mticker
     from PIL import Image 
     import matplotlib.animation as manimation
     # we only want to execute this in the __main__ part of the script, so we can also run plotting scripts interactively.
@@ -2242,6 +2243,8 @@ class FieldPlotter:
         height_frac = cb_height/ph
 
         cb_ax = fig4.add_axes((left_frac,bottom_frac,width_frac,height_frac))
+        cb_ax.xaxis.set_major_locator(mticker.LinearLocator(numticks=5))
+        cb_ax.xaxis.set_major_formatter(mticker.FormatStrFormatter('%.1e'))
         norm = self.norm
         cb = mcolorbar.ColorbarBase(cb_ax, cmap=cmap,
                norm=norm,
