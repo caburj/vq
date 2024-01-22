@@ -2250,7 +2250,7 @@ class FieldPlotter:
 
         if self.field_type == 'coulomb':
             coulomb_ticks = np.linspace(self.dmc['cbar_min'], self.dmc['cbar_max'], num=9)
-            coulomb_tick_labels = ["{:.1f}".format(x / 1e6) for x in coulomb_ticks]
+            coulomb_tick_labels = ["{:.2f}".format(x / 1e6) for x in coulomb_ticks]
             cb.set_ticks(coulomb_ticks)
             cb.set_ticklabels(coulomb_tick_labels)
 
