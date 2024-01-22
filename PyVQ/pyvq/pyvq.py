@@ -2249,26 +2249,8 @@ class FieldPlotter:
                orientation='horizontal')
 
         if self.field_type == 'coulomb':
-
-            def fmt(v):
-                if abs(v) < 0.001:
-                    return '0'
-
-                sign = -1 if v < 0 else 1
-                v = abs(v)
-                exp = math.floor(math.log10(v))
-                base = v / 10 ** exp
-                res = ''
-                if exp == 0:
-                    res = '{:.0f}'.format(base)
-                else:
-                    res = '{:.0f}e{}'.format(base, int(exp))
-                if sign == -1:
-                    res = '-{}'.format(res)
-                return res
-
             coulomb_ticks = np.linspace(self.dmc['cbar_min'], self.dmc['cbar_max'], num=9)
-            coulomb_tick_labels = [fmt(x) for x in coulomb_ticks]
+            coulomb_tick_labels = ["{:.1f}".format(x / 1e6) for x in coulomb_ticks]
             cb.set_ticks(coulomb_ticks)
             cb.set_ticklabels(coulomb_tick_labels)
 
@@ -2293,7 +2275,7 @@ class FieldPlotter:
             elif self.field_type == 'geoid':
                 cb_title = 'Geoid height change [cm]'
             elif self.field_type == 'coulomb':
-                cb_title = 'Change in Coulomb Failure Function [pa]'
+                cb_title = 'Change in Coulomb Failure Function [MPa]'
 
             if self.field_type != 'coulomb':
                 # Make first and last ticks on colorbar be <MIN and >MAX.
