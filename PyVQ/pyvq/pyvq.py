@@ -2251,13 +2251,8 @@ class FieldPlotter:
             else:
                 cb_title = 'Line-of-sight displacement [m]'
                 if self.levels:
-                    # Make first and last ticks on colorbar be <MIN and >MAX.
-                    # Values of colorbar min/max are set in FieldPlotter init.
-                    cb_tick_labs    = [item.get_text() for item in cb_ax.get_xticklabels()]
-                    cb_tick_labs[0] = '<'+cb_tick_labs[0]
-                    cb_tick_labs[-1]= '>'+cb_tick_labs[-1]
-                    cb_ax.set_xticklabels(cb_tick_labs)
-    
+                    self.convert_tick_labels(cb_ax, self.field_type)
+
         else:
             if self.field_type == 'gravity' or self.field_type == 'dilat_gravity' or self.field_type == 'satellite_gravity':
                 cb_title = r'Gravity changes [$\mu gal$]'
@@ -2266,13 +2261,8 @@ class FieldPlotter:
             elif self.field_type == 'geoid':
                 cb_title = 'Geoid height change [cm]'
             elif self.field_type == 'coulomb':
-                cb_title = 'Change in Coulomb Failure Function [pa]'
-            # Make first and last ticks on colorbar be <MIN and >MAX.
-            # Values of colorbar min/max are set in FieldPlotter init.
-            cb_tick_labs    = [item.get_text() for item in cb_ax.get_xticklabels()]
-            cb_tick_labs[0] = '<'+cb_tick_labs[0]
-            cb_tick_labs[-1]= '>'+cb_tick_labs[-1]
-            cb_ax.set_xticklabels(cb_tick_labs)
+                cb_title = 'Change in Coulomb Failure Function [MPa]'
+            self.convert_tick_labels(cb_ax, self.field_type)
 
         cb_ax.set_title(cb_title, fontproperties=font, color=cb_fontcolor, size=cb_fontsize, va='top', ha='left', position=(0,-1.5) )
 
@@ -2287,9 +2277,21 @@ class FieldPlotter:
         sys.stdout.write('\nPlot saved: {}'.format(output_file))
         sys.stdout.write('\ndone\n')
         sys.stdout.flush()
-        
-        
-        
+
+    def convert_tick_labels(self, ax, field_type):
+
+        def toMPa(text, field_type):
+            if field_type == 'coulomb':
+                value = float(text) * 1e-6 # convert to MPa
+                return '{:.1f}'.format(value)
+            else:
+                return text
+
+        new_tick_labels = [toMPa(tick.get_text(), field_type) for tick in ax.get_xticklabels()]
+        new_tick_labels[0] = '<' + new_tick_labels[0]
+        new_tick_labels[-1] = '>' + new_tick_labels[-1]
+
+        ax.set_xticklabels(new_tick_labels)
 
 
 # Evaluate an event field at specified lat/lon coords
