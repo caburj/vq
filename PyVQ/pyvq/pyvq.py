@@ -1691,6 +1691,8 @@ class FieldPlotter:
             self.dmc['cmap'] = plt.get_cmap('seismic')
             self.dmc['cbar_min'] = -cbar_max
             self.dmc['cbar_max'] = cbar_max
+            self.dmc['cbar_min_coulomb'] = -cbar_max * 1.10
+            self.dmc['cbar_max_coulomb'] = cbar_max * 1.10
             if self.field_type == 'gravity' or self.field_type == 'dilat_gravity' or self.field_type == 'satellite_gravity':
                 self.dmc['cb_fontsize'] = 20.0
             elif self.field_type == 'potential':
@@ -1699,7 +1701,6 @@ class FieldPlotter:
                 self.dmc['cb_fontsize'] = 16.0
             elif self.field_type == 'coulomb':
                 self.dmc['cb_fontsize'] = 16.0
-                
         if self.field_type == 'displacement' or self.field_type == 'insar':
             self.dmc['boundary_color_f'] = '#ffffff'
             self.dmc['coastline_color_f'] = '#ffffff'
@@ -2244,13 +2245,17 @@ class FieldPlotter:
 
         cb_ax = fig4.add_axes((left_frac,bottom_frac,width_frac,height_frac))
         norm = self.norm
+
+        if self.field_type == 'coulomb':
+            self.norm = mcolor.Normalize(vmin=self.dmc['cbar_min_coulomb'], vmax=self.dmc['cbar_max_coulomb'])
+
         cb = mcolorbar.ColorbarBase(cb_ax, cmap=cmap,
                norm=norm,
                orientation='horizontal')
 
         if self.field_type == 'coulomb':
             coulomb_ticks = [self.dmc['cbar_min'], self.dmc['cbar_min'] / 2, 0, self.dmc['cbar_max'] / 2, self.dmc['cbar_max']]
-            coulomb_tick_labels = ['{:.1e}'.format(x) for x in coulomb_ticks]
+            coulomb_tick_labels = ['{:.0e}'.format(x) for x in coulomb_ticks]
             cb.set_ticks(coulomb_ticks)
             cb.set_ticklabels(coulomb_tick_labels)
 
