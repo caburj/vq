@@ -3472,6 +3472,10 @@ if __name__ == "__main__":
                              
 
     if args.generate_vertex_4:
+        base = geometry.model.get_base()
+        base_lld = quakelib.LatLonDepth(base[0], base[1], 0.0)
+        c = quakelib.Conversion(base_lld)
+
         filename = "vertex_4.csv"
         with open(filename, "w") as f:
 
