@@ -3388,6 +3388,7 @@ if __name__ == "__main__":
             help="Reference value for numbers relative to some value.")
     parser.add_argument('--traces', required=False, action='store_true', help="Plot the fault traces from a fault model on a map.") 
     parser.add_argument('--fault_group_traces', required=False, action='store_true', help="Plot the fault traces on a map for two groups of faults, specified by two lists of fault ids using --group1_ids and --group2_ids.") 
+    parser.add_argument('--generate_vertex_4', required=False, action='store_true', help="Generate a csv file that maps each element to the lat-lon-alt of its 4th vertex")
             
     # ---------  Spacetime plots -----------
     parser.add_argument('--spacetime', required=False, action='store_true',
@@ -3409,6 +3410,10 @@ if __name__ == "__main__":
     # Catch these errors before reading events to save unneeded computation
     if args.uniform_slip:
         if float(args.uniform_slip) < 0: raise BaseException("\nSlip must be positive")
+
+    if args.generate_vertex_4:
+        if not args.model_file:
+            raise BaseException("\nMust specify --model_file to generate vertex 4")
     
     if args.field_plot:
         if args.model_file is None:
@@ -3465,6 +3470,30 @@ if __name__ == "__main__":
             else:
                 geometry = Geometry(model_file=args.model_file)
                              
+
+    if args.generate_vertex_4:
+        filename = "vertex_4.csv"
+        with open(filename, "w") as f:
+
+            columns = ["element_id", "lat", "lon", "alt"]
+            f.write(",".join(columns)+"\n")
+
+            element_ids = geometry.model.getElementIDs()
+            for element_id in element_ids:
+                element = geometry.model.element(element_id)
+                llds = [geometry.model.vertex(element.vertex(i)).lld() for i in [0,1,2]]
+                xyzs = [geometry.model.vertex(element.vertex(i)).xyz() for i in [0,1,2]]
+                if element.is_quad():
+                    llds.append(c.convert2LatLon(xyzs[2] + (xyzs[1] - xyzs[0])))
+
+                row = [element_id]
+                for lld in llds:
+                    row.append(lld.lat())
+                    row.append(lld.lon())
+                    row.append(lld.altitude() / -1000.0)
+
+                f.write(",".join([str(val) for val in row])+"\n")
+
     # Read the event and sweeps files
     if args.event_file and args.sweep_file is None and args.combine_file is None:
         # If given multiple event files
