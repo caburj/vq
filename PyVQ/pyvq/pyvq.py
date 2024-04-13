@@ -3472,12 +3472,13 @@ if __name__ == "__main__":
                              
 
     if args.generate_vertex_4:
+
+        base = geometry.model.get_base()
+        base_lld = quakelib.LatLonDepth(base[0], base[1], 0.0)
+        c = quakelib.Conversion(base_lld)
+
         filename = "vertex_4.csv"
         with open(filename, "w") as f:
-
-            base = geometry.model.get_base()
-            base_lld = quakelib.LatLonDepth(base[0], base[1], 0.0)
-            c = quakelib.Conversion(base_lld)
 
             columns = ["element_id", "lat", "lon", "alt"]
             f.write(",".join(columns)+"\n")
@@ -3487,15 +3488,9 @@ if __name__ == "__main__":
                 element = geometry.model.element(element_id)
                 llds = [geometry.model.vertex(element.vertex(i)).lld() for i in [0,1,2]]
                 xyzs = [geometry.model.vertex(element.vertex(i)).xyz() for i in [0,1,2]]
-                if element.is_quad():
-                    llds.append(c.convert2LatLon(xyzs[2] + (xyzs[1] - xyzs[0])))
+                lld4 = c.convert2LatLon(xyzs[2] + (xyzs[1] - xyzs[0]))
 
-                row = [element_id]
-                for lld in llds:
-                    row.append(lld.lat())
-                    row.append(lld.lon())
-                    row.append(lld.altitude() / -1000.0)
-
+                row = [element_id, lld4.lat(), lld4.lon(), lld4.altitude() / -1000.0]
                 f.write(",".join([str(val) for val in row])+"\n")
 
     # Read the event and sweeps files
